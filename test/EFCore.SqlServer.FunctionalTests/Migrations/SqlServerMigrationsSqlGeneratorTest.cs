@@ -1287,6 +1287,29 @@ ALTER TABLE [Person] ADD DEFAULT N'' FOR [Name];
         Assert.Equal(RelationalStrings.UnsupportedTypeForColumn("TestTable", "TestColumn", "FileStream"), ex.Message);
     }
 
+    [ConditionalFact]
+    public void CreateIndexOperation_if_exists()
+    {
+        Generate(
+            new CreateIndexOperation
+            {
+                Name = "IX_People_Name_IfExists",
+                Table = "People",
+                Schema = "dbo",
+                Columns = ["FirstName", "LastName"],
+                CheckIfExists = true,
+                [SqlServerAnnotationNames.CreatedOnline] = true
+            });
+
+        AssertSql(
+            """
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = 'IX_People_Name_IfExists' AND object_id = OBJECT_ID('People'))
+BEGIN
+    CREATE INDEX [IX_People_Name_IfExists] ON [dbo].[People] ([FirstName], [LastName]) WHERE [FirstName] IS NOT NULL AND [LastName] IS NOT NULL WITH (ONLINE = ON);
+END
+""");
+    }
+
     private static void CreateGotModel(ModelBuilder b)
         => b.HasDefaultSchema("dbo").Entity(
             "Person", pb =>

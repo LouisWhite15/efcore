@@ -75,6 +75,11 @@ public class CreateIndexOperation : MigrationOperation, ITableMigrationOperation
     public virtual string? Filter { get; set; }
 
     /// <summary>
+    ///     Indicates whether to check for the existence of the index before creating it
+    /// </summary>
+    public virtual bool CheckIfExists { get; set; }
+
+    /// <summary>
     ///     Creates a new <see cref="CreateIndexOperation" /> from the specified index.
     /// </summary>
     /// <param name="index">The index.</param>
