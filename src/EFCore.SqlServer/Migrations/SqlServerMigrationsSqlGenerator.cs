@@ -831,6 +831,14 @@ public class SqlServerMigrationsSqlGenerator : MigrationsSqlGenerator
         MigrationCommandListBuilder builder,
         bool terminate = true)
     {
+        if (operation.CheckIfExists)
+        {
+            builder.AppendLine(
+                $"IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = '{operation.Name}' AND object_id = OBJECT_ID('{operation.Table}'))");
+            builder.AppendLine("BEGIN");
+            builder.Indent();
+        }
+
         var table = model?.GetRelationalModel().FindTable(operation.Table, operation.Schema);
         var hasNullableColumns = operation.Columns.Any(c => table?.FindColumn(c)?.IsNullable != false);
 
@@ -879,6 +887,14 @@ public class SqlServerMigrationsSqlGenerator : MigrationsSqlGenerator
                     .Append(stringTypeMapping.GenerateSqlLiteral(command.CommandText))
                     .Append(")");
             }
+        }
+
+        if (operation.CheckIfExists)
+        {
+            builder
+                .DecrementIndent()
+                .AppendLine(Dependencies.SqlGenerationHelper.StatementTerminator)
+                .Append("END");
         }
 
         if (terminate)
